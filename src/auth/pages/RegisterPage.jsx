@@ -1,10 +1,12 @@
 
 
-import { Button, Grid, Link, TextField, Typography } from "@mui/material";
+import { Alert, Button, Grid, Link, TextField, Typography } from "@mui/material";
 import { Link as RouterLink } from 'react-router-dom'
 import { AuthLayout } from "../layout/AuthLayout";
 import { useForm } from "../../hooks";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { startRegisterUserWithEmailPassword } from "../../store/auth";
 
 const formData = {
   email: 'julian@gmail.com',
@@ -20,23 +22,32 @@ const formValidations = {
 
 export const RegisterPage = () => {
 
+  const dispatch = useDispatch();
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const { status, errorMessage } = useSelector(state => state.auth);
 
   const { formState, displayName, email, password, onInputChange,
     isFormValid, displayNameValid, emailValid, passwordValid
   } = useForm(formData, formValidations);
 
+  const isCheckingAuthenticating = useMemo( ()=> status === 'checking', [status]);
+
   const onSubmit = (event) => {
     event.preventDefault();
     setFormSubmitted(true);
-    console.log(formState);
+
+    if (!isFormValid) return;
+
+
+    dispatch(startRegisterUserWithEmailPassword(formState));
   }
 
   return (
 
     <AuthLayout title='Crear cuenta'>
 
-      <form onSubmit={onSubmit}>
+      <form onSubmit={onSubmit} className="animate__animated animate__fadeIn animate__faster">
 
         <Grid container>
 
@@ -87,9 +98,21 @@ export const RegisterPage = () => {
 
           <Grid container spacing={2} sx={{ mb:2, mt:1 }}>
 
+            <Grid item xs={12} display={ errorMessage ? '' : 'none'}>
+              <Alert severity="error" >
+                {errorMessage}
+              </Alert>
+             
+            </Grid>
+
             <Grid item xs={12}>
 
-              <Button variant="contained" fullWidth type="submit">
+              <Button 
+                variant="contained"
+                fullWidth
+                type="submit"
+                disabled={isCheckingAuthenticating}
+              >
   
                 Crear cuenta
               </Button>
